@@ -1,0 +1,12 @@
+irc-ssl-proxy
+=============
+
+This program is a relatively primitive workaround for the limited SSL support
+some IRC clients offer.
+
+Some IRC clients (esp. libpurple based ones) do not support e.g. CA certificate
+validation or connecting using SSL client certificates. This proxy asks for a
+password, and if it matches the one configured locally, connects to the IRC
+network using the user's SSL client certificate.
+
+Requires socat and openssl s_client at the moment.
