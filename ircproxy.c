@@ -22,17 +22,8 @@
  * SUCH DAMAGE.
  */
 
-/* Usage:
-	# compile: cc -o ircproxy ircproxy.c
-
-	# then execute the following shellscript:
-	export PROXY_PASS=s4cr3t
-	socat TCP-LISTEN:6667,bind=localhost,fork,reuseaddr SYSTEM:'exec ./ircproxy -c combined.pem -k combined.pem -C xinutec-ca.crt -s irc.xinutec.net\:6697'
- */
-
 #include <unistd.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -51,9 +42,9 @@ main(int argc, char **argv)
 	char *pass = getenv("PROXY_PASS");
 
 	if (!pass)
-		DIE("Please put your password in PROXY_PASS");
+		DIE("Please put your password in the PROXY_PASS environment variable");
 
-	while ((c = getopt (argc, argv, "c:C:k:s:")) != -1) {
+	while ((c = getopt (argc, argv, "c:C:k:s:h")) != -1) {
 		switch (c) {
 		case 's':
 			hostport = optarg;
@@ -67,12 +58,15 @@ main(int argc, char **argv)
 		case 'c':
 			cert = optarg;
 			break;
+		case 'h':
 		default:
-			exit(1); // FIXME help text
+			DIE("Please consult the manpage for help");
 		}
 	}
-	if (!(hostport && ca && cert && key))
-		DIE("one was undefined");
+	if (!hostport) DIE("No host+port given (parameter -s).");
+	if (!ca)       DIE("No CA certificate given (parameter -C)");
+	if (!cert)     DIE("No SSL client certificate given (parameter -c)");
+	if (!key)      DIE("No SSL private key given (parameter -k)");
 	arg[4] = hostport;
 	arg[6] = ca;
 	arg[8] = cert;
@@ -82,16 +76,13 @@ main(int argc, char **argv)
 	if (!strncasecmp(buf, "PASS ", 5)) {
 		size_t i = 5;
 		if (buf[i] == ':') i++;
-		strtok(buf,"\n");
-		strtok(buf,"\r");
+		strtok(buf+i,"\r\n");
 		if (strcmp(buf+i, pass)) {
-			puts("ERROR : wrong password\r");
-			fflush(stdout);
+			fputs("ERROR : wrong password\r\n", stdout);
 			DIE("wrong password");
 		}
 	} else {
-		puts("ERROR : wrong password\r");
-		fflush(stdout);
+		fputs("ERROR : wrong password\r\n", stdout);
 		DIE("wrong password");
 	}
 	execvp(arg[0], arg);

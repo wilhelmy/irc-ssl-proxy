@@ -1,0 +1,15 @@
+Run "make" and make sure openssl and socat are installed on your system and in
+$PATH. Download the CA certificate of the IRC network you want to use, save it
+as ca.crt and generate a SSL client certificate as follows:
+
+  $ openssl genrsa -out key.pem 4096 # generate the private key
+  $ yes '' | openssl req -new -x509 -key key.pem -out cert.pem -days 1095
+  $ cat key.pem cert.pem > combined.pem
+
+Then edit run.sh and change the password and IRC network you want to connect
+to, save and run it.
+
+Afterwards connect to localhost, using the port you specified in run.sh (6667
+by default) and the connection password you specified in run.sh as password.
+You should then be connected to the IRC network securely, even if you use a
+very old or simple client that doesn't support SSL at all.
